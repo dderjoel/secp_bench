@@ -1,0 +1,22 @@
+diff --git a/src/bench_ecmult.c b/src/bench_ecmult.c
+index 98fb798..1c1361a 100644
+--- a/src/bench_ecmult.c
++++ b/src/bench_ecmult.c
+@@ -341,7 +341,7 @@ int main(int argc, char **argv) {
+     run_ecmult_bench(&data, iters);
+ 
+     for (i = 1; i <= 8; ++i) {
+-        run_ecmult_multi_bench(&data, i, 1, iters);
++        /** run_ecmult_multi_bench(&data, i, 1, iters); */
+     }
+ 
+     /* This is disabled with low count of iterations because the loop runs 77 times even with iters=1
+@@ -350,7 +350,7 @@ int main(int argc, char **argv) {
+      if (iters > 2) {
+         for (p = 0; p <= 11; ++p) {
+             for (i = 9; i <= 16; ++i) {
+-                run_ecmult_multi_bench(&data, i << p, 1, iters);
++                /** run_ecmult_multi_bench(&data, i << p, 1, iters); */
+             }
+         }
+     }
