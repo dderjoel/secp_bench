@@ -6,6 +6,7 @@ set -e # die on error
 #
 clean() {
   rm -rf asm c c52 fiat_c fiat_cryptopt
+  rm -- *.log
 }
 
 default_asm() {
@@ -16,7 +17,7 @@ default_asm() {
   pushd "${dir}"
   ./autogen.sh
   ./configure --with-asm=x86_64
-  make
+  make -j bench_internal bench_ecmult
 
   popd
 
@@ -31,7 +32,7 @@ default_c() {
   pushd "${dir}"
   ./autogen.sh
   ./configure --with-asm=no
-  make
+  make -j bench_internal bench_ecmult
 
   popd
 
@@ -43,11 +44,12 @@ default_c52() {
   # we compile to use the C version which does not contain 810 by reverting the patch
   dir=c52
   cp -r ./base "${dir}"
+  cp ./field_5x52_asm_impl_before_810.h "${dir}"/src/field_5x52_int128_impl.h
   pushd "${dir}"
-  git revert b53e0cd61fce0bcef178f317537c91efc9afd04d
+
   ./autogen.sh
   ./configure --with-asm=no
-  make
+  make -j bench_internal bench_ecmult
 
   popd
 
@@ -88,7 +90,7 @@ EOF
   pushd "${dir}"
   ./autogen.sh
   ./configure --with-asm=no
-  make
+  make -j bench_internal bench_ecmult
 
   popd
 
@@ -101,12 +103,19 @@ fiat_cryptopt() {
   # we replace the C versions.
   dir=fiat_cryptopt
   cp -r ./base "${dir}"
-  cp ./field_5x52_asm_impl_cryptopt.h "${dir}"/src/field_5x52_asm_impl.h
-
+  cp ./field_5x52_asm_impl_cryptopt.h ./field_5x52_asm_impl_cryptopt.c "${dir}"/src
   pushd "${dir}"
+
+  sed -i -e 's@#include "field_5x52_asm_impl.h"@#include "field_5x52_asm_impl_cryptopt.h"@' ./src/field_5x52_impl.h
+  sed -i ./Makefile.am \
+    -e 's@libsecp256k1_la_SOURCES = src/secp256k1.c@\0 ./src/field_5x52_asm_impl_cryptopt.c@' \
+    -e 's@bench_SOURCES = src/bench.c@\0 ./src/field_5x52_asm_impl_cryptopt.c@' \
+    -e 's@bench_internal_SOURCES = src/bench_internal.c@\0 ./src/field_5x52_asm_impl_cryptopt.c@' \
+    -e 's@bench_ecmult_SOURCES = src/bench_ecmult.c@\0 ./src/field_5x52_asm_impl_cryptopt.c@'
+
   ./autogen.sh
   ./configure --with-asm=x86_64
-  make
+  make -j bench_internal bench_ecmult
 
   popd
 
@@ -115,8 +124,11 @@ fiat_cryptopt() {
 
 }
 
-fiat_c
-fiat_cryptopt
+clean
 default_c
 default_c52
 default_asm
+fiat_c
+fiat_cryptopt
+
+./eval.sh
