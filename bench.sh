@@ -6,7 +6,8 @@ set -e # die on error
 #
 clean() {
   rm -rf "$(hostname)"{asm,c,c52,fiat_c,fiat_cryptopt}
-  rm -- *.log
+
+  rm -f -- *.log
 }
 
 default_asm() {
