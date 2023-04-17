@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 res="$(hostname)_secpbench.bench"
-paste "$(hostname)/"{default_asm,default_c,default_c52,fiat_c,fiat_cryptopt}_bench_ecmult.log | head -n 10 | tail -n +3 >"${res}"
-paste "$(hostname)/"{default_asm,default_c,default_c52,fiat_c,fiat_cryptopt}_bench_internal.log | grep -e 'field_sqr' -e 'field_mul' >>"${res}"
+paste "$(hostname)/"{default_asm,default_c,default_c52,fiat_c,fiat_cryptopt}_bench_ecmult.log | tail -n +3 >"${res}"
+paste "$(hostname)/"{default_asm,default_c,default_c52,fiat_c,fiat_cryptopt}_bench_internal.log >>"${res}"
 
 printf "%20s,%15s,%15s,%15s,%15s,%15s\n" "bench" "asm" "c" "c52" "fiat_c" "fiat_cryptopt"
 awk '{printf "%20s", $1; for (i =5; i<= NF; i+=7) printf ",%15s", $i; printf "\n"; }' "${res}"
