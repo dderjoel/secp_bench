@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-res="$(hostname)_secpbench"
-paste "$(hostname)"{asm,c,c52,fiat_c,fiat_cryptopt}_bench_ecmult.log | head -n10 | tail -n+3 >"${res}"
-paste "$(hostname)"{asm,c,c52,fiat_c,fiat_cryptopt}_bench_internal.log | grep -e 'field_sqr' -e 'field_mul' >>"${res}"
+res="$(hostname)_secpbench.bench"
+paste "$(hostname)/"{default_asm,default_c,default_c52,fiat_c,fiat_cryptopt}_bench_ecmult.log | head -n 10 | tail -n +3 >"${res}"
+paste "$(hostname)/"{default_asm,default_c,default_c52,fiat_c,fiat_cryptopt}_bench_internal.log | grep -e 'field_sqr' -e 'field_mul' >>"${res}"
 
-printf "%20s,%10s,%10s,%10s,%10s,%10s\n" "bench" "asm" "c" "c52" "fiat_c" "fiat_cryptopt"
-awk '{printf "%20s", $1; for (i =5; i<= NF; i+=7) printf ",%10s", $i; printf "\n"; }' "${res}"
+printf "%20s,%15s,%15s,%15s,%15s,%15s\n" "bench" "asm" "c" "c52" "fiat_c" "fiat_cryptopt"
+awk '{printf "%20s", $1; for (i =5; i<= NF; i+=7) printf ",%15s", $i; printf "\n"; }' "${res}"
 
 # awk '{printf "%s %s (", $1, $2; for (i =3; i<= NF; i+=4) printf "%s*", $i; printf "1)^(1/10)\n"; }' ecmult
 # awk ' {print $3}' <merge_calc.bench | calc -p >evaled.bench

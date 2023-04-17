@@ -2,50 +2,36 @@
 
 set -e # die on error
 
-# base is the upsteam project
-#
-clean() {
-  rm -rf "$(hostname)"{asm,c,c52,fiat_c,fiat_cryptopt}
-
-  rm -f -- *.log
-}
+# base is the upsteam project but ecmult does not run _all_ the benchmarks
 
 default_asm() {
   # we compile to use the hand written asembly
-
-  dir=$(hostname)asm
-  cp -r ./base "${dir}"
+  dir=default_asm
+  cp -r ../base "${dir}"
   pushd "${dir}"
   ./autogen.sh
   ./configure --with-asm=x86_64
   make -j bench_internal bench_ecmult
 
-  popd
-
-  "./${dir}/bench_internal" >"./${dir}_bench_internal.log"
-  "./${dir}/bench_ecmult" >"./${dir}_bench_ecmult.log"
 }
 
 default_c() {
   # we compile to use the upsteam C version which contains 810
-  dir=$(hostname)c
-  cp -r ./base "${dir}"
+  dir=default_c
+  cp -r ../base "${dir}"
   pushd "${dir}"
   ./autogen.sh
   ./configure --with-asm=no
   make -j bench_internal bench_ecmult
 
   popd
-
-  "./${dir}/bench_internal" >"./${dir}_bench_internal.log"
-  "./${dir}/bench_ecmult" >"./${dir}_bench_ecmult.log"
 }
 
 default_c52() {
   # we compile to use the C version which does not contain 810 by reverting the patch
-  dir=$(hostname)c52
-  cp -r ./base "${dir}"
-  cp ./field_5x52_asm_impl_before_810.h "${dir}"/src/field_5x52_int128_impl.h
+  dir=default_c52
+  cp -r ../base "${dir}"
+  cp ../field_5x52_asm_impl_before_810.h "${dir}"/src/field_5x52_int128_impl.h
   pushd "${dir}"
 
   ./autogen.sh
@@ -53,16 +39,13 @@ default_c52() {
   make -j bench_internal bench_ecmult
 
   popd
-
-  "./${dir}/bench_internal" >"./${dir}_bench_internal.log"
-  "./${dir}/bench_ecmult" >"./${dir}_bench_ecmult.log"
 }
 
 fiat_c() {
   # we replace the C versions.
-  dir=$(hostname)fiat_c
-  cp -r ./base "${dir}"
-  cp ./secp256k1_dettman_64.c "${dir}"/src
+  dir=fiat_c
+  cp -r ../base "${dir}"
+  cp ../secp256k1_dettman_64.c "${dir}"/src
 
   cat >"${dir}/src/field_5x52_int128_impl.h" <<EOF
 
@@ -93,16 +76,13 @@ EOF
   make -j bench_internal bench_ecmult
 
   popd
-
-  "./${dir}/bench_internal" >"./${dir}_bench_internal.log"
-  "./${dir}/bench_ecmult" >"./${dir}_bench_ecmult.log"
 }
 
 fiat_cryptopt() {
   # we replace the C versions.
-  dir=$(hostname)fiat_cryptopt
-  cp -r ./base "${dir}"
-  cp ./field_5x52_asm_impl_cryptopt.h ./field_5x52_asm_impl_cryptopt.c "${dir}"/src
+  dir=fiat_cryptopt
+  cp -r ../base "${dir}"
+  cp ../field_5x52_asm_impl_cryptopt.h ../field_5x52_asm_impl_cryptopt.c "${dir}"/src
   pushd "${dir}"
 
   sed -i -e 's@#include "field_5x52_asm_impl.h"@#include "field_5x52_asm_impl_cryptopt.h"@' ./src/field_5x52_impl.h
@@ -117,16 +97,30 @@ fiat_cryptopt() {
   make -j bench_internal bench_ecmult
 
   popd
-
-  "./${dir}/bench_internal" >"./${dir}_bench_internal.log"
-  "./${dir}/bench_ecmult" >"./${dir}_bench_ecmult.log"
 }
 
-clean
-default_c
-default_c52
-default_asm
-fiat_c
-fiat_cryptopt
+wd="$(hostname)"
+mkdir -p "${wd}"
+pushd "${wd}"
 
+# default_c &
+# default_c52 &
+# default_asm &
+# fiat_c &
+# fiat_cryptopt &
+
+wait
+
+for dir in $(ls | grep -v base); do
+  test ! -d "${dir}" && continue
+  "./${dir}/bench_internal" field | tee "./${dir}_bench_internal.log"
+  "./${dir}/bench_ecmult" | tee "./${dir}_bench_ecmult.log"
+done
+
+popd
 ./eval.sh
+#
+# clean() {
+# rm -rf "$(hostname)"{asm,c,c52,fiat_c,fiat_cryptopt}
+# rm -r -- "$(hostname)"{asm,c,c52,fiat_c,fiat_cryptopt}*.log
+# }
