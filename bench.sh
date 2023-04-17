@@ -103,11 +103,11 @@ wd="$(hostname)"
 mkdir -p "${wd}"
 pushd "${wd}"
 
-# default_c &
-# default_c52 &
-# default_asm &
-# fiat_c &
-# fiat_cryptopt &
+default_c &
+default_c52 &
+default_asm &
+fiat_c &
+fiat_cryptopt &
 
 wait
 
