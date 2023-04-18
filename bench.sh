@@ -7,6 +7,7 @@ set -e # die on error
 default_asm() {
   # we compile to use the hand written asembly
   dir=default_asm
+  rm -rf "${dir}"
   cp -r ../base "${dir}"
   pushd "${dir}"
   ./autogen.sh
@@ -18,6 +19,7 @@ default_asm() {
 default_c() {
   # we compile to use the upsteam C version which contains 810
   dir=default_c
+  rm -rf "${dir}"
   cp -r ../base "${dir}"
   pushd "${dir}"
   ./autogen.sh
@@ -30,6 +32,7 @@ default_c() {
 default_c52() {
   # we compile to use the C version which does not contain 810 by reverting the patch
   dir=default_c52
+  rm -rf "${dir}"
   cp -r ../base "${dir}"
   cp ../field_5x52_asm_impl_before_810.h "${dir}"/src/field_5x52_int128_impl.h
   pushd "${dir}"
@@ -44,6 +47,7 @@ default_c52() {
 fiat_c() {
   # we replace the C versions.
   dir=fiat_c
+  rm -rf "${dir}"
   cp -r ../base "${dir}"
   cp ../secp256k1_dettman_64.c "${dir}"/src
 
@@ -81,16 +85,17 @@ EOF
 fiat_cryptopt() {
   # we replace the C versions.
   dir=fiat_cryptopt
+  rm -rf "${dir}"
   cp -r ../base "${dir}"
   cp ../field_5x52_asm_impl_cryptopt.h ../field_5x52_asm_impl_cryptopt.c "${dir}"/src
   pushd "${dir}"
 
   sed -i -e 's@#include "field_5x52_asm_impl.h"@#include "field_5x52_asm_impl_cryptopt.h"@' ./src/field_5x52_impl.h
   sed -i ./Makefile.am \
-    -e 's@libsecp256k1_la_SOURCES = src/secp256k1.c@\0 ./src/field_5x52_asm_impl_cryptopt.c@' \
-    -e 's@bench_SOURCES = src/bench.c@\0 ./src/field_5x52_asm_impl_cryptopt.c@' \
-    -e 's@bench_internal_SOURCES = src/bench_internal.c@\0 ./src/field_5x52_asm_impl_cryptopt.c@' \
-    -e 's@bench_ecmult_SOURCES = src/bench_ecmult.c@\0 ./src/field_5x52_asm_impl_cryptopt.c@'
+    -e 's@libsecp256k1_la_SOURCES = src/secp256k1.c$@\0 ./src/field_5x52_asm_impl_cryptopt.c@' \
+    -e 's@bench_SOURCES = src/bench.c$@\0 ./src/field_5x52_asm_impl_cryptopt.c@' \
+    -e 's@bench_internal_SOURCES = src/bench_internal.c$@\0 ./src/field_5x52_asm_impl_cryptopt.c@' \
+    -e 's@bench_ecmult_SOURCES = src/bench_ecmult.c$@\0 ./src/field_5x52_asm_impl_cryptopt.c@'
 
   ./autogen.sh
   ./configure --with-asm=x86_64
@@ -103,9 +108,9 @@ wd="$(hostname)"
 mkdir -p "${wd}"
 pushd "${wd}"
 
+default_asm &
 default_c &
 default_c52 &
-default_asm &
 fiat_c &
 fiat_cryptopt &
 
