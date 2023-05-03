@@ -23,7 +23,10 @@ for impl in default_asm default_c default_c52 fiat_c fiat_cryptopt; do
 done
 
 (
-  printf "|%20s|%20s|%20s|%20s|%20s|%20s|\n|---|---|---|---|---|---|\n" "implementation" "default_asm" "default_c" "default_c52" "fiat_c" "fiat_cryptopt"
+  printf "|%20s |%15s |%15s |%15s |%15s |%15s |\n" "implementation" "default_asm" "default_c" "default_c52" "fiat_c" "fiat_cryptopt"
+  printf "|---------------------|----------------|----------------|----------------|----------------|----------------|\n"
   paste ./{default_asm,default_c,default_c52,fiat_c,fiat_cryptopt}.gm |
-    awk '{printf "|%20s", $1; for (i =2; i<= NF; i+=2) printf "|%20s", $i; printf "|\n"  }'
-) | tee geometic_mean
+    awk '{printf "|%20s ", $1; for (i =2; i<= NF; i+=2) printf "|%15s ", $i; printf "|\n"  }'
+) | tee geometic_mean.md
+
+rm ./*.gm
