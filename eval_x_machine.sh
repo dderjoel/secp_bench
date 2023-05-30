@@ -13,7 +13,7 @@ for impl in default_asm default_c default_c52 fiat_c fiat_cryptopt; do
     awk '{printf "%20s %15s\n", $1, $5}' "${machine}/${impl}_bench_ecmult.log" | tail -n +3 >"${r}"
     awk '{printf "%20s %15s\n", $1, $5}' "${machine}/${impl}_bench_internal.log" | tail -n +3 >>"${r}"
 
-  done < <(find ${root} -mindepth 1 -maxdepth 1 -type d -not -name '.git' -and -not -name 'base' | sort)
+  done < <(find ${root} -mindepth 1 -maxdepth 1 -type d -not -name '.git' -and -not -name 'base' -and -not -name 'secp256k1' | sort)
 
   paste ${tmp}${impl}_part_* |
     # awk '{sum=1; num=0; printf "%20s", $1; for (i =2; i<= NF; i+=2){ printf ",%15s", $i; sum*=$i; num++}; printf " %15s %2s %15s\n", sum, num, sum ** (1/num); }' | #(this one writes the avgs' per machine, product, count and geometric mean)
