@@ -83,19 +83,11 @@ EOF
 }
 
 fiat_cryptopt() {
-  # we replace the C versions.
+  # with the replaced asm version, copying from fork dderjoel/secp256k1
   dir=fiat_cryptopt
   rm -rf "${dir}"
-  cp -r ../base "${dir}"
-  cp ../field_5x52_asm_impl_cryptopt.h ../field_5x52_asm_impl_cryptopt.c "${dir}"/src
+  cp -r ../secp256k1 "${dir}"
   pushd "${dir}"
-
-  sed -i -e 's@#include "field_5x52_asm_impl.h"@#include "field_5x52_asm_impl_cryptopt.h"@' ./src/field_5x52_impl.h
-  sed -i ./Makefile.am \
-    -e 's@libsecp256k1_la_SOURCES = src/secp256k1.c$@\0 ./src/field_5x52_asm_impl_cryptopt.c@' \
-    -e 's@bench_SOURCES = src/bench.c$@\0 ./src/field_5x52_asm_impl_cryptopt.c@' \
-    -e 's@bench_internal_SOURCES = src/bench_internal.c$@\0 ./src/field_5x52_asm_impl_cryptopt.c@' \
-    -e 's@bench_ecmult_SOURCES = src/bench_ecmult.c$@\0 ./src/field_5x52_asm_impl_cryptopt.c@'
 
   ./autogen.sh
   ./configure --with-asm=x86_64
