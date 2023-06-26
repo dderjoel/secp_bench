@@ -150,7 +150,7 @@ wait
 for dir in $(ls | grep -v base); do
   test ! -d "${dir}" && continue
   "./${dir}/bench_internal" field | tee "./${dir}_bench_internal.log"
-  "./${dir}/bench_ecmult" | tee "./${dir}_bench_ecmult.log"
+  "./${dir}/bench_ecmult" | grep -v "ecmult_multi_" | tee "./${dir}_bench_ecmult.log"
 done
 
 popd
