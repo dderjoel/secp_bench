@@ -82,6 +82,44 @@ EOF
   popd
 }
 
+fiat_c_narrow_int() {
+  # we replace the C versions.
+  dir=fiat_c_narrow_int
+  rm -rf "${dir}"
+  cp -r ../base "${dir}"
+  cp ../mashup.h "${dir}"/src
+
+  cat >"${dir}/src/field_5x52_int128_impl.h" <<EOF
+
+#ifndef SECP256K1_FIELD_INNER5X52_IMPL_H
+#define SECP256K1_FIELD_INNER5X52_IMPL_H
+
+#include <stdint.h>
+
+#include "mashup.h"
+
+SECP256K1_INLINE static void
+secp256k1_fe_mul_inner(uint64_t *r, const uint64_t *a,
+                       const uint64_t *SECP256K1_RESTRICT b) {
+  fiat_secp256k1_dettman_mul(r, a, b);
+}
+
+SECP256K1_INLINE static void secp256k1_fe_sqr_inner(uint64_t *r,
+                                                    const uint64_t *a) {
+  fiat_secp256k1_dettman_square(r, a);
+}
+
+#endif /* SECP256K1_FIELD_INNER5X52_IMPL_H */
+EOF
+
+  pushd "${dir}"
+  ./autogen.sh
+  ./configure --with-asm=no
+  make -j bench_internal bench_ecmult
+
+  popd
+}
+
 fiat_cryptopt() {
   # with the replaced asm version, copying from fork dderjoel/secp256k1
   dir=fiat_cryptopt
@@ -104,6 +142,7 @@ default_asm &
 default_c &
 default_c52 &
 fiat_c &
+fiat_c_narrow_int &
 fiat_cryptopt &
 
 wait

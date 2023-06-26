@@ -24,11 +24,6 @@ typedef signed char fiat_secp256k1_dettman_int1;
 #define FIAT_SECP256K1_DETTMAN_FIAT_INLINE
 #endif
 
-FIAT_SECP256K1_DETTMAN_FIAT_EXTENSION typedef signed __int128
-    fiat_secp256k1_dettman_int128;
-FIAT_SECP256K1_DETTMAN_FIAT_EXTENSION typedef unsigned __int128
-    fiat_secp256k1_dettman_uint128;
-
 #if (-1 & 3) != 3
 #error "This code only works on a two's complement system"
 #endif
@@ -37,7 +32,8 @@ FIAT_SECP256K1_DETTMAN_FIAT_EXTENSION typedef unsigned __int128
 #define HAS_BUILTIN(x) __has_builtin(x)
 #else
 #define HAS_BUILTIN(x) 0
-#endif // __has_builtin
+#endif
+// __has_builtin
 
 /*
  * The function fiat_secp256k1_dettman_addcarryx_u64 is an addition with carry.
