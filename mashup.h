@@ -33,7 +33,6 @@ typedef signed char fiat_secp256k1_dettman_int1;
 #else
 #define HAS_BUILTIN(x) 0
 #endif
-// __has_builtin
 
 /*
  * The function fiat_secp256k1_dettman_addcarryx_u64 is an addition with carry.
