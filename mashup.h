@@ -33,6 +33,12 @@ FIAT_SECP256K1_DETTMAN_FIAT_EXTENSION typedef unsigned __int128
 #error "This code only works on a two's complement system"
 #endif
 
+#if defined(__has_builtin)
+#define HAS_BUILTIN(x) __has_builtin(x)
+#else
+#define HAS_BUILTIN(x) 0
+#endif // __has_builtin
+
 /*
  * The function fiat_secp256k1_dettman_addcarryx_u64 is an addition with carry.
  *
@@ -49,49 +55,34 @@ FIAT_SECP256K1_DETTMAN_FIAT_EXTENSION typedef unsigned __int128
  *   out2: [0x0 ~> 0x1]
  */
 static FIAT_SECP256K1_DETTMAN_FIAT_INLINE void
-fiat_secp256k1_dettman_addcarryx_u64(uint64_t *out1,
-                                     fiat_secp256k1_dettman_uint1 *out2,
-                                     fiat_secp256k1_dettman_uint1 arg1,
-                                     uint64_t arg2, uint64_t arg3) {
-#error "implement me"
-  fiat_secp256k1_dettman_uint128 x1;
-  fiat_secp256k1_dettman_uint1 x2;
-  x1 = ((arg1 + (fiat_secp256k1_dettman_uint128)arg2) + arg3);
-  x2 = (fiat_secp256k1_dettman_uint1)(x1 >> 64);
-  *out1 = (uint64_t)x1;
-  *out2 = x2;
-}
+fiat_secp256k1_dettman_addcarryx_u64(uint64_t *out,
+                                     fiat_secp256k1_dettman_uint1 *outc,
+                                     fiat_secp256k1_dettman_uint1 c, uint64_t a,
+                                     uint64_t b) {
 
-/*
- * The function fiat_secp256k1_dettman_subborrowx_u64 is a subtraction with
- * borrow.
- *
- * Postconditions:
- *   out1 = (-arg1 + arg2 + -arg3) mod 2^64
- *   out2 = -⌊(-arg1 + arg2 + -arg3) / 2^64⌋
- *
- * Input Bounds:
- *   arg1: [0x0 ~> 0x1]
- *   arg2: [0x0 ~> 0xffffffffffffffff]
- *   arg3: [0x0 ~> 0xffffffffffffffff]
- * Output Bounds:
- *   out1: [0x0 ~> 0xffffffffffffffff]
- *   out2: [0x0 ~> 0x1]
- */
-static FIAT_SECP256K1_DETTMAN_FIAT_INLINE void
-fiat_secp256k1_dettman_subborrowx_u64(uint64_t *out1,
-                                      fiat_secp256k1_dettman_uint1 *out2,
-                                      fiat_secp256k1_dettman_uint1 arg1,
-                                      uint64_t arg2, uint64_t arg3) {
-#error "implement me"
-  fiat_secp256k1_dettman_uint128 x1;
-  fiat_secp256k1_dettman_int1 x2;
-  uint64_t x3;
-  x1 = ((arg2 - (fiat_secp256k1_dettman_uint128)arg1) - arg3);
-  x2 = (fiat_secp256k1_dettman_int1)(x1 >> 64);
-  x3 = (uint64_t)(x1 & UINT64_C(0xffffffffffffffff));
-  *out1 = x3;
-  *out2 = (fiat_secp256k1_dettman_uint1)(0x0 - x2);
+#if HAS_BUILTIN(__builtin_ia32_addcarryx_u64)
+  unsigned long long t;
+  *outc = __builtin_ia32_addcarryx_u64(c, a, b, &t);
+  *out = t;
+#elif HAS_BUILTIN(__builtin_addcll)
+  unsigned long long t;
+  *out = __builtin_addcll(a, b, c, &t);
+  *outc = t;
+#elif defined(_M_X64)
+  *outc = _addcarryx_u64(c, a, b, out);
+#elif defined(__SIZEOF_INT128__)
+  unsigned __int128 big = a + (unsigned __int128)b + c;
+  *out = big;
+  *outc = big >> 64;
+#else
+  // #error "need adc"
+  a += c;
+  c = a < c;
+  uint64_t ret = a + b;
+  c += ret < a;
+  *out = ret;
+  *outc = c;
+#endif
 }
 
 /*
@@ -110,15 +101,32 @@ fiat_secp256k1_dettman_subborrowx_u64(uint64_t *out1,
  *   out2: [0x0 ~> 0xffffffffffffffff]
  */
 static FIAT_SECP256K1_DETTMAN_FIAT_INLINE void
-fiat_secp256k1_dettman_mulx_u64(uint64_t *out1, uint64_t *out2, uint64_t arg1,
-                                uint64_t arg2) {
-#error "implement me"
-  fiat_secp256k1_dettman_uint128 x1;
-  uint64_t x2;
-  x1 = ((fiat_secp256k1_dettman_uint128)arg1 * arg2);
-  x2 = (uint64_t)(x1 >> 64);
-  *out1 = (uint64_t)x1;
-  *out2 = x2;
+fiat_secp256k1_dettman_mulx_u64(uint64_t *lo, uint64_t *hi, uint64_t a,
+                                uint64_t b) {
+#if defined(__SIZEOF_INT128__)
+  unsigned __int128 big = a * (unsigned __int128)b;
+  *lo = big;
+  *hi = big >> 64;
+#elif defined(_MSC_VER)
+  *lo = _umul128(a, b, hi);
+#else
+#error "need mul128"
+  uint64_t W = (uint64_t)4 * sizeof(uint64_t); // half-word width
+  uint64_t M = ((uint64_t)1 << W) - 1;
+  uint64_t lh = (a & M) * (b >> W);
+  uint64_t hl = (a >> W) * (b & M);
+  uint64_t sW = lh + hl;
+  uint64_t r2W = (a >> W) * (b >> W);
+  uint64_t c3W = sW < lh;
+  r2W += c3W << W;
+  r2W += sW >> W;
+  uint64_t r0 = (a & M) * (b & M);
+  uint64_t s0 = r0 + (sW << W);
+  uint64_t c2W = s0 < r0;
+  r2W += c2W;
+  *lo = s0;
+  *hi = r2W;
+#endif
 }
 
 /*
