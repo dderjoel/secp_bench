@@ -4,3 +4,6 @@
 [submodule "secp256k1"]
 	path = secp256k1
 	url = https://github.com/dderjoel/secp256k1
+[submodule "secp256k1_only_c"]
+	path = secp256k1_only_c
+	url = https://github.com/dderjoel/secp256k1
