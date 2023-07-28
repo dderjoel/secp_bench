@@ -44,44 +44,6 @@ default_c52() {
   popd
 }
 
-fiat_c() {
-  # we replace the C versions.
-  dir=fiat_c
-  rm -rf "${dir}"
-  cp -r ../base "${dir}"
-  cp ../secp256k1_dettman_64.c "${dir}"/src
-
-  cat >"${dir}/src/field_5x52_int128_impl.h" <<EOF
-
-#ifndef SECP256K1_FIELD_INNER5X52_IMPL_H
-#define SECP256K1_FIELD_INNER5X52_IMPL_H
-
-#include <stdint.h>
-
-#include "secp256k1_dettman_64.c"
-
-SECP256K1_INLINE static void
-secp256k1_fe_mul_inner(uint64_t *r, const uint64_t *a,
-                       const uint64_t *SECP256K1_RESTRICT b) {
-  fiat_secp256k1_dettman_mul(r, a, b);
-}
-
-SECP256K1_INLINE static void secp256k1_fe_sqr_inner(uint64_t *r,
-                                                    const uint64_t *a) {
-  fiat_secp256k1_dettman_square(r, a);
-}
-
-#endif /* SECP256K1_FIELD_INNER5X52_IMPL_H */
-EOF
-
-  pushd "${dir}"
-  ./autogen.sh
-  ./configure --with-asm=no
-  make -j bench_internal bench_ecmult
-
-  popd
-}
-
 fiat_c_narrow_int() {
   # we replace the C versions.
   dir=fiat_c_narrow_int
@@ -121,7 +83,7 @@ EOF
 }
 
 fiat_cryptopt() {
-  # with the replaced asm version, copying from fork dderjoel/secp256k1
+  # with the replaced asm version, copying from fork dderjoel/secp256k1, branch only-asm
   dir=fiat_cryptopt
   rm -rf "${dir}"
   cp -r ../secp256k1 "${dir}"
@@ -134,15 +96,29 @@ fiat_cryptopt() {
   popd
 }
 
+fiat_c() {
+  # with the replaced asm version, copying from fork dderjoel/secp256k1, branch only-c
+  dir=fiat_c
+  rm -rf "${dir}"
+  cp -r ../secp256k1_only_c "${dir}"
+  pushd "${dir}"
+
+  ./autogen.sh
+  ./configure --with-asm=no
+  make -j bench_internal bench_ecmult
+
+  popd
+}
+
 wd="$(hostname)"
 mkdir -p "${wd}"
 pushd "${wd}"
 
 default_asm &
 default_c &
-default_c52 &
+# default_c52 &
 fiat_c &
-fiat_c_narrow_int &
+# fiat_c_narrow_int &
 fiat_cryptopt &
 
 wait
