@@ -3,7 +3,7 @@
 root=./
 tmp=/tmp/eval_x_
 
-for impl in default_asm default_c default_c52 fiat_c fiat_c_narrow_int fiat_cryptopt; do
+for impl in default_asm default_c fiat_c fiat_cryptopt; do
   nummachines=0
 
   while read -r machine; do
@@ -23,9 +23,9 @@ for impl in default_asm default_c default_c52 fiat_c fiat_c_narrow_int fiat_cryp
 done
 
 (
-  printf "|%20s |%15s |%15s |%15s |%15s |%15s |%15s |\n" "implementation" "default_asm" "default_c" "default_c52" "fiat_c" "fiat_c_narrow_int" "fiat_cryptopt"
-  printf "|---------------------|----------------|----------------|----------------|----------------|----------------|----------------|\n"
-  paste ./{default_asm,default_c,default_c52,fiat_c,fiat_c_narrow_int,fiat_cryptopt}.gm |
+  printf "|%20s |%15s |%15s |%15s |%15s |\n" "implementation" "default_asm" "default_c" "fiat_c" "fiat_cryptopt"
+  printf "|---------------------|----------------|----------------|----------------|----------------|\n"
+  paste ./{default_asm,default_c,fiat_c,fiat_cryptopt}.gm |
     awk '{printf "|%20s ", $1; for (i =2; i<= NF; i+=2) printf "|%15s ", $i; printf "|\n"  }'
 ) | tee geometic_mean.md
 
